@@ -1,12 +1,11 @@
-import Editor from "../../components/editor/editor";
 import React, {useEffect, useState} from "react";
-import VispanaApiClient from "../../client/vispana-api-client";
-import QueryResult from "../../components/query-result/query-result";
-import {v4 as uuidv4} from 'uuid';
 import {Tooltip} from "react-tooltip";
-import {useSearchParams} from "react-router-dom";
+import {v4 as uuidv4} from 'uuid';
+import QueryResult from "../../components/query-result/query-result";
+import Editor from "../../components/editor/editor-hybrid";
+import VispanaApiClient from "../../client/vispana-api-client";
 
-function Query({containerUrl, schema, searchParams, setSearchParams}) {
+function Query({containerUrl, schema, searchParams, setSearchParams, vespaState}) {
     function runQuery() {
         searchParams.set(queryFieldFromSearchParam(schema), query)
         setSearchParams(searchParams)
@@ -67,7 +66,8 @@ function Query({containerUrl, schema, searchParams, setSearchParams}) {
         <Editor query={query}
                 setQuery={setQuery}
                 handleRunQuery={runQuery}
-                handleFormatQuery={prettifyJsonQuery}/>
+                handleFormatQuery={prettifyJsonQuery}
+                vespaState={vespaState}/>
         <div className="form-control mb-2 flex flex-row pt-1 justify-end min-w-full">
             <a type="button"
                 className="btn bg-standout-blue text-yellow-400 w-13 text-center border-none outline-none mr-1"
