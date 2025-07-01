@@ -21,7 +21,7 @@ function Schema() {
         <TabView tabs={[
             {
                 "header": "Query",
-                "content": <Query containerUrl={containerUrl} schema={schema} searchParams={searchParams} setSearchParams= {setSearchParams}/>
+                "content": <Query containerUrl={containerUrl} schema={schema} searchParams={searchParams} setSearchParams={setSearchParams} vespaState={vespaState}/>
             },
             {
                 "header": "Query history",

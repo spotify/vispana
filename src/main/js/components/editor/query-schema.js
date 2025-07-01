@@ -3,90 +3,141 @@ export default function schema() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
+            // Query
             "yql": {type: "string", "minLength": 1},
-            "hits": {type: "integer", minimum: 0},
-            "offset": {type: "integer", minimum: 0},
-            "queryProfile": {type: "string", minLength: 1},
-            "groupingSessionCache": {type: "boolean"},
-            "searchChain": {type: "string", minLength: 1},
-            "timeout": {type: "string", minLength: 1},
+            
+            // Native Execution Parameters
+            "hits": {type: "integer", minimum: 0, maximum: 400, description: "Maximum number of hits to return"},
+            "offset": {type: "integer", minimum: 0, maximum: 1000, description: "Number of hits to skip"},
+            "queryProfile": {type: "string", minLength: 1, description: "Query profile id with format name:version"},
+            "groupingSessionCache": {type: "boolean", description: "Enable grouping session cache"},
+            "searchChain": {type: "string", minLength: 1, description: "Search chain to use"},
+            "timeout": {type: "string", minLength: 1, description: "Query timeout"},
+            "recall": {type: "string", description: "Recall parameter to be combined with the query"},
+            "user": {type: "string", description: "User id making the query"},
+            "hitcountestimate": {type: "boolean", description: "Make this an estimation query"},
+            "noCache": {type: "boolean", description: "Never serve this query from cache"},
+            
+            // Query Model Parameters  
             "model": {
                 type: 'object',
                 properties: {
-                    "defaultIndex": {type: 'string'},
-                    "encoding": {type: 'string'},
-                    "filter": {type: 'string'},
-                    "locale": {type: 'string'},
-                    "language": {type: 'string'},
-                    "queryString": {type: 'string'},
-                    "restrict": {type: 'string'},
-                    "searchPath": {type: 'string'},
-                    "sources": {type: 'string'},
-                    "type": {type: 'string'},
+                    "defaultIndex": {type: 'string', description: "Default index for query terms"},
+                    "encoding": {type: 'string', description: "Character encoding"},
+                    "filter": {type: 'string', description: "Filter to apply to query"},
+                    "locale": {type: 'string', description: "Locale for linguistic processing"},
+                    "language": {type: 'string', description: "Language for linguistic processing"},
+                    "queryString": {type: 'string', description: "Query string"},
+                    "restrict": {type: 'string', description: "Restrict to specific document types"},
+                    "searchPath": {type: 'string', description: "Search path"},
+                    "sources": {type: 'string', description: "Sources to search"},
+                    "type": {type: 'string', description: "Query type"}
                 },
+                additionalProperties: false
             },
+            
+            // Ranking Parameters
             "ranking": {
                 type: ['object', 'string'],
                 properties: {
-                    "location": {type: 'string'},
+                    "location": {type: 'string', description: "Location for distance ranking"},
                     "features": {
                         type: 'object',
-                        properties: {},
+                        description: "Ranking features (input parameters)",
                         additionalProperties: true
                     },
-                    "listFeatures": {type: 'boolean'},
-                    "profile": {type: 'string'},
+                    "listFeatures": {type: 'boolean', description: "Include feature values in result"},
+                    "profile": {type: 'string', description: "Ranking profile to use"},
                     "properties": {
                         type: 'object',
-                        properties: {},
+                        description: "Ranking properties",
                         additionalProperties: true
                     },
                     "softtimeout": {
                         type: 'object',
                         properties: {
-                            "enable": {type: 'boolean'},
-                            "factor": {type: 'number', minimum: 0, maximum: 1},
+                            "enable": {type: 'boolean', description: "Enable soft timeout"},
+                            "factor": {type: 'number', minimum: 0, maximum: 1, description: "Timeout factor"}
                         },
+                        additionalProperties: false
                     },
-                },
-                "sorting": {type: 'string'},
-                "freshness": {type: 'string'},
-                "queryCache": {type: 'boolean'},
-                "rerankCount": {type: 'integer', minimum: 0},
-                "matching": {
-                    type: 'object',
-                    properties: {
-                        "numThreadsPerSearch": {type: 'integer', minimum: 0},
-                        "minHitsPerThread": {type: 'integer', minimum: 0},
-                        "numSearchPartitions": {type: 'integer', minimum: 0},
-                        "termwiseLimit": {type: 'number', minimum: 0, maximum: 1},
-                        "postFilterThreshold": {type: 'number', minimum: 0, maximum: 1},
-                        "approximateThreshold": {type: 'number', minimum: 0, maximum: 1},
+                    "sorting": {type: 'string', description: "Sorting specification"},
+                    "freshness": {type: 'string', description: "Freshness boost"},
+                    "queryCache": {type: 'boolean', description: "Enable query cache"},
+                    "rerankCount": {type: 'integer', minimum: 0, description: "Number of hits to rerank"},
+                    "keepRankCount": {type: 'integer', minimum: 0, description: "Keep rank count"},
+                    "rankScoreDropLimit": {type: 'number', description: "Rank score drop limit"},
+                    "matching": {
+                        type: 'object',
+                        properties: {
+                            "numThreadsPerSearch": {type: 'integer', minimum: 0},
+                            "minHitsPerThread": {type: 'integer', minimum: 0},
+                            "numSearchPartitions": {type: 'integer', minimum: 0},
+                            "termwiseLimit": {type: 'number', minimum: 0, maximum: 1},
+                            "postFilterThreshold": {type: 'number', minimum: 0, maximum: 1},
+                            "approximateThreshold": {type: 'number', minimum: 0, maximum: 1}
+                        },
+                        additionalProperties: false
                     },
-                },
-                "matchPhase": {
-                    type: 'object',
-                    properties: {
-                        "attribute": {type: 'string'},
-                        "maxHits": {type: 'integer'},
-                        "ascending": {type: 'boolean'},
-                        "diversity": {
-                            type: 'object',
-                            properties: {
-                                "attribute": {type: 'string'},
-                                "minGroups": {type: 'integer'},
+                    "matchPhase": {
+                        type: 'object',
+                        properties: {
+                            "attribute": {type: 'string', description: "Match phase attribute"},
+                            "maxHits": {type: 'integer', description: "Maximum hits in match phase"},
+                            "ascending": {type: 'boolean', description: "Ascending sort order"},
+                            "diversity": {
+                                type: 'object',
+                                properties: {
+                                    "attribute": {type: 'string'},
+                                    "minGroups": {type: 'integer'}
+                                },
+                                additionalProperties: false
                             }
-                        }
+                        },
+                        additionalProperties: false
+                    },
+                    "secondPhase": {
+                        type: 'object',
+                        properties: {
+                            "rankScoreDropLimit": {type: 'number', description: "Second phase rank score drop limit"}
+                        },
+                        additionalProperties: false
+                    },
+                    "globalPhase": {
+                        type: 'object', 
+                        properties: {
+                            "rerankCount": {type: 'integer', minimum: 0, description: "Global phase rerank count"},
+                            "rankScoreDropLimit": {type: 'number', description: "Global phase rank score drop limit"}
+                        },
+                        additionalProperties: false
                     }
-                }
+                },
+                additionalProperties: false
             },
-            "collapsesize": {type: 'integer', minimum: 1},
-            "collapsefield": {type: 'string'},
+            
+            // Presentation Parameters
+            "presentation": {
+                type: 'object',
+                properties: {
+                    "bolding": {type: 'boolean', description: "Enable term bolding in summaries"},
+                    "format": {type: 'string', description: "Result format"},
+                    "template": {type: 'string', description: "Result template"},
+                    "summary": {type: 'string', description: "Summary class to use"},
+                    "timing": {type: 'boolean', description: "Include timing information"}
+                },
+                additionalProperties: false
+            },
+            
+            // Grouping and Aggregation
+            "select": {type: 'string', description: "Grouping select expression"},
+            "collapsesize": {type: 'integer', minimum: 1, description: "Number of hits per collapsed group"},
+            "collapsefield": {type: 'string', description: "Field to collapse on"},
             "collapse": {
                 type: 'object',
                 properties: {
-                    "summary": {type: 'string'},
+                    "summary": {type: 'string', description: "Summary for collapsed hits"}
                 },
+                additionalProperties: false
             },
             "grouping": {
                 type: 'object',
@@ -94,86 +145,98 @@ export default function schema() {
                     "defaultMaxGroups": {type: 'integer', minimum: -1},
                     "defaultMaxHits": {type: 'integer', minimum: -1},
                     "globalMaxGroups": {type: 'integer', minimum: -1},
-                    "defaultPrecisionFactor": {type: 'number', minimum: 0},
+                    "defaultPrecisionFactor": {type: 'number', minimum: 0}
                 },
+                additionalProperties: false
             },
-            "presentation": {
+            
+            // Streaming Parameters
+            "streaming": {
                 type: 'object',
                 properties: {
-                    "bolding": {type: 'boolean'},
-                    "format": {type: 'string'},
-                    "template": {type: 'string'},
-                    "summary": {type: 'string'},
-                    "timing": {type: 'boolean'},
+                    "userid": {type: 'integer', description: "User ID for streaming search"},
+                    "groupname": {type: 'string', description: "Group name for streaming search"},
+                    "selection": {type: 'string', description: "Document selection for streaming"},
+                    "priority": {type: 'string', description: "Priority for streaming"},
+                    "maxbucketspervisitor": {type: 'integer', description: "Maximum buckets per visitor"}
                 },
+                additionalProperties: false
             },
+            
+            // Tracing Parameters
             "trace": {
                 type: 'object',
                 properties: {
-                    "level": {type: 'integer', minimum: 1},
-                    "explainLevel": {type: 'integer', minimum: 1},
-                    "profileDepth": {type: 'integer', minimum: 1},
-                    "timestamps": {type: 'boolean'},
-                    "query": {type: 'boolean'},
+                    "level": {type: 'integer', minimum: 1, description: "Trace level"},
+                    "explainLevel": {type: 'integer', minimum: 1, description: "Explain level"},
+                    "profileDepth": {type: 'integer', minimum: 1, description: "Profile depth"},
+                    "timestamps": {type: 'boolean', description: "Include timestamps in trace"},
+                    "query": {type: 'boolean', description: "Trace query processing"}
                 },
+                additionalProperties: false
             },
+            "tracelevel": {type: 'integer', minimum: 0, description: "Legacy trace level parameter"},
+            
+            // Semantic Rules
             "rules": {
                 type: 'object',
                 properties: {
-                    "off": {type: 'boolean'},
-                    "rulebase": {type: 'string'},
+                    "off": {type: 'boolean', description: "Disable semantic rules"},
+                    "rulebase": {type: 'string', description: "Rule base to use"}
                 },
+                additionalProperties: false
             },
-            "tracelevel": {type: 'integer', minimum: 0},
+            
+            // Dispatch Parameters
             "dispatch": {
                 type: 'object',
                 properties: {
-                    "topKProbability": {type: 'number', minimum: 0, maximum: 1},
+                    "topKProbability": {type: 'number', minimum: 0, maximum: 1, description: "Top-K probability for dispatch"}
                 },
+                additionalProperties: false
             },
-            "recall": {type: 'string'},
-            "user": {type: 'string'},
-            "hitcountestimate": {type: 'boolean'},
+            
+            // Other Parameters
             "metrics": {
                 type: 'object',
                 properties: {
-                    "ignore": {type: 'boolean'},
+                    "ignore": {type: 'boolean', description: "Ignore metric collection"}
                 },
+                additionalProperties: false
             },
             "weakAnd": {
                 type: 'object',
                 properties: {
-                    "replace": {type: 'boolean'},
+                    "replace": {type: 'boolean', description: "Replace OR with weakAnd"}
                 },
+                additionalProperties: false
             },
             "wand": {
                 type: 'object',
                 properties: {
-                    "hits": {type: 'integer'},
+                    "hits": {type: 'integer', description: "Target hits for WAND"}
                 },
+                additionalProperties: false
             },
             "sorting": {
                 type: 'object',
                 properties: {
-                    "degrading": {type: 'boolean'},
+                    "degrading": {type: 'boolean', description: "Enable degrading for sorting optimization"}
                 },
-            },
-            "streaming": {
-                type: 'object',
-                properties: {
-                    "userid": {type: 'integer'},
-                    "groupname": {type: 'string'},
-                    "selection": {type: 'string'},
-                    "priority": {type: 'string'},
-                    "maxbucketspervisitor": {type: 'integer'},
-                },
+                additionalProperties: false
             },
 
-            // extra
-            "summary": {type: 'string'}
+            // Additional commonly used parameters
+            "summary": {type: 'string', description: "Summary class to use"}
+        },
+        "patternProperties": {
+            "^rankfeature\\..*": {
+                "type": ["string", "number"],
+                "description": "Rank feature parameter - can be a string (e.g., tensor expressions) or number (e.g., weights)"
+            }
         },
         "required": [
-            "yql",
+            "yql"
         ],
         "additionalProperties": true
     }
