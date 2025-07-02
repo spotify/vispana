@@ -21,7 +21,6 @@
     "ace-linters": "^0.13.3",
     "daisyui": "^3.9.3",
     "install": "^0.13.0",
-    "npm": "^10.2.1",
     "react": "^18.2.0",
     "react-ace": "^10.1.0",
     "react-data-table-component": "^7.5.4",
