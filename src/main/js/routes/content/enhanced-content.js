@@ -6,87 +6,10 @@ import EnhancedGrid from "../../components/simple-grid/enhanced-grid";
 import TabView from "../../components/tabs/tab-view";
 import { queryFieldFromSearchParam } from "../schema/query";
 
-function Content() {
+function EnhancedContent() {
     const vespaState = useOutletContext();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [optimalPageSize, setOptimalPageSize] = React.useState(15);
-    const [isOptimalSizeCalculated, setIsOptimalSizeCalculated] = React.useState(false);
-    const [gridHeight, setGridHeight] = React.useState('60vh');
-
-    // Calculate optimal page size based on viewport height (accounting for more UI elements)
-    const calculateOptimalPageSize = () => {
-        const viewportHeight = window.innerHeight;
-        const navigationHeight = 60; // Top navigation bar
-        const tabHeight = 50; // Tab navigation height
-        const tabBarHeight = 50; // Content cluster tab bar
-        const overviewHeight = 120; // Overview card height
-        const schemasHeight = 180; // Schema cards section height (estimated)
-        const paginationHeight = 80; // Height for pagination controls
-        const marginsPadding = 80; // Various margins and padding (more due to cards)
-        const rowHeight = 48; // Approximate height per row
-        
-        const totalOverhead = navigationHeight + tabHeight + tabBarHeight + overviewHeight + schemasHeight + paginationHeight + marginsPadding;
-        const availableHeight = viewportHeight - totalOverhead;
-        const maxRows = Math.floor(availableHeight / rowHeight);
-        
-        // Use at least 10 rows (lower due to more UI overhead)
-        return Math.max(10, maxRows);
-    };
-
-    // Calculate optimal grid height based on viewport
-    const calculateOptimalGridHeight = () => {
-        const viewportHeight = window.innerHeight;
-        const navigationHeight = 60; // Top navigation bar
-        const tabHeight = 50; // Tab navigation height
-        const contentAreaHeight = 200; // Overview + schema cards area (reduced estimate)
-        const marginsPadding = 80; // Various margins and padding (more conservative)
-        
-        const totalOverhead = navigationHeight + tabHeight + contentAreaHeight + marginsPadding;
-        const availableHeight = viewportHeight - totalOverhead;
-        
-        // Use at least 250px, but allow more if space permits
-        const minHeight = 250;
-        const calculatedHeight = Math.max(minHeight, availableHeight);
-        
-        console.log('Content grid height calculation:', {
-            viewportHeight,
-            totalOverhead,
-            availableHeight,
-            calculatedHeight
-        });
-        
-        return `${calculatedHeight}px`;
-    };
-
-    // Set optimal page size and grid height on component mount (only once)
-    React.useEffect(() => {
-        const optimalSize = calculateOptimalPageSize();
-        const optimalHeight = calculateOptimalGridHeight();
-        
-        console.log('Content initialization - optimal size:', optimalSize, 'height:', optimalHeight);
-        
-        setOptimalPageSize(optimalSize);
-        setGridHeight(optimalHeight);
-        setIsOptimalSizeCalculated(true);
-    }, []); // Empty dependency array - only run once on mount
-
-    // Add resize listener to recalculate grid height when window is resized
-    React.useEffect(() => {
-        const handleResize = () => {
-            const newHeight = calculateOptimalGridHeight();
-            console.log('Content window resized, new grid height:', newHeight);
-            setGridHeight(newHeight);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []); // Empty dependency array - only set up listener once
-
-    // Show loading state until optimal size is calculated
-    if (!isOptimalSizeCalculated) {
-        return <div className="text-yellow-400 p-8"></div>;
-    }
 
     const tabs = vespaState
         .content
@@ -103,8 +26,29 @@ function Content() {
             }
         ))
 
-    return (<TabView tabs={tabs}></TabView>);
+    // Handler for clickable headers - integrates with query.js
+    const handleHeaderClick = (headerText) => {
+        // Navigate to schema page with the header text inserted
+        // This assumes you have a schema selected - you might need to adjust this logic
+        const firstSchema = vespaState.content.clusters[0]?.contentData[0]?.schema?.schemaName;
+        if (firstSchema) {
+            const queryField = queryFieldFromSearchParam(firstSchema);
+            const currentQuery = searchParams.get(queryField) || `SELECT * from ${firstSchema} where true`;
+            
+            // Insert the header text into the query at cursor position
+            // For demo purposes, we'll append it to the WHERE clause
+            const updatedQuery = currentQuery.replace(
+                /where\s+true/i, 
+                `where ${headerText.toLowerCase().replace(/\s+/g, '_')} = "value" AND true`
+            );
+            
+            searchParams.set(queryField, updatedQuery);
+            setSearchParams(searchParams);
+            navigate(`/app/schema/${firstSchema}?${searchParams.toString()}`);
+        }
+    };
 
+    return (<TabView tabs={tabs}></TabView>);
 
     function renderOverview(overview) {
         return <div className="flex-auto mt-6">
@@ -233,17 +177,14 @@ function Content() {
                     header="Content nodes" 
                     data={contentNodes}
                     hasDistributionKey={true}
-                    pagination={contentNodes.length > 10} // Enable pagination for large datasets
-                    paginationRowsPerPageOptions={[5, 10, optimalPageSize, 20, 50]
-                        .filter((value, index, array) => array.indexOf(value) === index)
-                        .sort((a, b) => a - b)}
+                    onHeaderClick={handleHeaderClick}
+                    pagination={contentNodes.length > 20} // Enable pagination for large datasets
                     fixedHeader={true}
-                    simplified={true}
-                    gridHeight={gridHeight}
+                    expandableRows={true}
                 />
             </div>
         );
     }
 }
 
-export default Content;
+export default EnhancedContent; 

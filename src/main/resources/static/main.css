@@ -84,3 +84,419 @@ div.service_unknown {
     vertical-align:middle;
     text-align: right;
 }
+
+/* Enhanced Grid Styles - matching original SimpleGrid styling */
+
+/* Override existing service status styles for enhanced grid */
+.enhanced-grid .service_up {
+    background-color: #10b981; /* green-500 */
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+}
+
+.enhanced-grid .service_down {
+    background-color: #ef4444; /* red-500 */
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+}
+
+.enhanced-grid .service_unknown {
+    background-color: #6b7280; /* gray-500 */
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+}
+
+/* Progress Bar Styles */
+.progress {
+    width: 100%;
+    height: 8px;
+    border: none;
+    border-radius: 4px;
+    background-color: #374151;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.progress-success {
+    accent-color: #10b981; /* green-500 */
+}
+
+.progress-success::-webkit-progress-bar {
+    background-color: #374151;
+    border-radius: 6px;
+}
+
+.progress-success::-webkit-progress-value {
+    background-color: #10b981;
+    border-radius: 6px;
+}
+
+.progress-success::-moz-progress-bar {
+    background-color: #10b981;
+    border-radius: 6px;
+}
+
+.progress-warning {
+    accent-color: #f59e0b; /* amber-500 */
+}
+
+.progress-warning::-webkit-progress-bar {
+    background-color: #374151;
+    border-radius: 6px;
+}
+
+.progress-warning::-webkit-progress-value {
+    background-color: #f59e0b;
+    border-radius: 6px;
+}
+
+.progress-warning::-moz-progress-bar {
+    background-color: #f59e0b;
+    border-radius: 6px;
+}
+
+.progress-error {
+    accent-color: #ef4444; /* red-500 */
+}
+
+.progress-error::-webkit-progress-bar {
+    background-color: #374151;
+    border-radius: 6px;
+}
+
+.progress-error::-webkit-progress-value {
+    background-color: #ef4444;
+    border-radius: 6px;
+}
+
+.progress-error::-moz-progress-bar {
+    background-color: #ef4444;
+    border-radius: 6px;
+}
+
+/* Enhanced grid specific styles */
+.enhanced-grid-container {
+    background-color: #1f2a40; /* standout-blue */
+    border-radius: 6px;
+    border: 1px solid #26324a; /* standout-blue border */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Fix tooltip positioning in enhanced grid */
+[data-tooltip-id="vispana-tooltip"] {
+    position: relative;
+    z-index: 999 !important;
+}
+
+/* Ensure tooltips appear above fixed headers */
+.react-tooltip {
+    z-index: 10000 !important;
+    position: fixed !important;
+}
+
+/* Fix for react-tooltip positioning in data tables */
+div[role="tooltip"] {
+    z-index: 10000 !important;
+    position: fixed !important;
+}
+
+/* Ensure data table cells don't interfere with tooltips */
+.rdt_TableCell {
+    position: relative;
+    z-index: 1;
+}
+
+.rdt_TableCell:hover {
+    z-index: 999;
+}
+
+/* Override react-data-table-component styles */
+.rdt_Table {
+    border-radius: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+}
+
+.rdt_TableHead {
+    background-color: #1f2a40 !important;
+    border-bottom: 1px solid #141b2d !important;
+    width: 100% !important;
+    min-height: 56px !important;
+    border-radius: 0 !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+}
+
+.rdt_TableHeadRow {
+    background-color: #1f2a40 !important;
+    border-bottom: 1px solid #141b2d !important;
+    width: 100% !important;
+    display: flex !important;
+    min-height: 52px !important;
+    align-items: center !important;
+    border-radius: 0 !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 101 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.rdt_TableCol {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+    flex-grow: 1;
+    flex-shrink: 1;
+    background-color: #1f2a40 !important;
+    z-index: 102 !important;
+}
+
+/* Header column distribution for Query History only - work with component logic */
+.query-history-grid .rdt_TableCol {
+    overflow: hidden;
+}
+
+.rdt_TableRow {
+    background-color: #1f2a40 !important;
+    border-bottom: 1px solid #141b2d !important;
+    width: 100% !important;
+    display: flex !important;
+    min-height: 44px !important;
+    align-items: center !important;
+}
+
+.rdt_TableRow:hover {
+    background-color: #3b4f77 !important;
+    border: 1px solid #facc15 !important;
+}
+
+.rdt_ExpanderRow {
+    background-color: #1f2a40 !important;
+    border-bottom: 1px solid #141b2d !important;
+}
+
+.rdt_TableCell {
+    display: flex !important;
+    align-items: center !important;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    padding: 0.5rem !important;
+}
+
+/* Action buttons */
+.grid-action-button {
+    background: none;
+    border: none;
+    color: #facc15; /* yellow-400 */
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out;
+}
+
+.grid-action-button:hover {
+    color: #ffffff;
+    background-color: rgba(250, 204, 21, 0.1);
+}
+
+.grid-action-button:focus {
+    outline: 2px solid #facc15;
+    outline-offset: 2px;
+}
+
+/* Clickable header styles */
+.clickable-header {
+    cursor: pointer;
+    transition: color 0.2s ease-in-out;
+    user-select: none;
+}
+
+.clickable-header:hover {
+    color: #ffffff !important;
+}
+
+.clickable-header:active {
+    color: #facc15 !important;
+    transform: scale(0.98);
+}
+
+/* Full height grid container */
+.full-height-grid {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.full-height-grid .rdt_Table {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.full-height-grid .rdt_TableBody {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Optimal scrolling for DataTable components */
+.optimal-scroll-grid {
+    height: 60vh !important; /* Simple, conservative height */
+    max-height: 60vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* Targeted fix for query results in tabs - slightly smaller height */
+.react-tabs__tab-panel .optimal-scroll-grid {
+    height: 50vh !important;
+    max-height: 50vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.optimal-scroll-grid .rdt_Table {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.optimal-scroll-grid .rdt_TableBody {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Constrain expanded row content */
+.rdt_ExpanderRow {
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.rdt_ExpanderRow > div {
+    max-height: 380px !important;
+    overflow-y: auto !important;
+}
+
+/* Prevent body scroll when grid is in use */
+.grid-page-container {
+    height: 100vh !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.grid-content-area {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+}
+
+/* Enhanced Grid expand button styling */
+.rdt_ExpanderRow button,
+.rdt_TableCell button[aria-label*="Expand"],
+.rdt_TableCell button[aria-label*="Collapse"],
+.rdt_TableCell .rdt_ExpanderButton {
+    color: #d1d5db !important;
+    fill: #d1d5db !important;
+}
+
+.rdt_ExpanderRow button:hover,
+.rdt_TableCell button[aria-label*="Expand"]:hover,
+.rdt_TableCell button[aria-label*="Collapse"]:hover,
+.rdt_TableCell .rdt_ExpanderButton:hover {
+    color: #facc15 !important;
+    fill: #facc15 !important;
+}
+
+.rdt_ExpanderRow button svg,
+.rdt_TableCell button svg {
+    color: inherit !important;
+    fill: inherit !important;
+}
+
+/* Hide sorting icons but preserve header text */
+.rdt_TableHeadRow .rdt_TableCol svg,
+.rdt_TableHeadRow .rdt_TableCol [data-testid="sort-icon"],
+.rdt_TableHeadRow .rdt_TableCol [aria-sort="ascending"]::after,
+.rdt_TableHeadRow .rdt_TableCol [aria-sort="descending"]::after,
+.rdt_TableHeadRow .rdt_TableCol .rdt_TableCol_Sortable svg,
+.rdt_TableHeadRow .rdt_TableCol .rdt_TableCol_Sortable span:last-child,
+.rdt_TableHeadRow .rdt_TableCol > div > span:last-child svg,
+.rdt_TableHeadRow .rdt_TableCol > div > div:last-child svg,
+.rdt_TableHeadRow .rdt_TableCol [role="columnheader"] > div > span:last-child,
+.rdt_TableHeadRow .rdt_TableCol [role="columnheader"] > div > div:last-child {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Ensure header text is visible */
+.rdt_TableHeadRow .rdt_TableCol {
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+.rdt_TableHeadRow .rdt_TableCol > div {
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Show only the text content, hide sort icons */
+.rdt_TableHeadRow .rdt_TableCol > div > div:first-child,
+.rdt_TableHeadRow .rdt_TableCol > div > span:first-child {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Override any sort-related styling */
+.rdt_TableHeadRow .rdt_TableCol:hover {
+    cursor: pointer !important;
+}
+
+/* Remove any sort indicators */
+.rdt_TableHeadRow .rdt_TableCol::after,
+.rdt_TableHeadRow .rdt_TableCol::before {
+    display: none !important;
+}
+
+/* Modal z-index override */
+.rdt_Table .fixed {
+    z-index: 10000 !important;
+}
+
+.rdt_TableBody {
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+
+/* Query History Grid - Simple approach to make Query column fill remaining space */
+.query-history-grid {
+    width: 100%;
+}
+
+/* Ensure the table uses full width */
+.query-history-grid .rdt_Table {
+    width: 100%;
+}
+
+/* Query cell specific - force ellipsis */
+.query-history-grid .query-cell-content {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
