@@ -28,24 +28,7 @@ function EnhancedContent() {
 
     // Handler for clickable headers - integrates with query.js
     const handleHeaderClick = (headerText) => {
-        // Navigate to schema page with the header text inserted
-        // This assumes you have a schema selected - you might need to adjust this logic
-        const firstSchema = vespaState.content.clusters[0]?.contentData[0]?.schema?.schemaName;
-        if (firstSchema) {
-            const queryField = queryFieldFromSearchParam(firstSchema);
-            const currentQuery = searchParams.get(queryField) || `SELECT * from ${firstSchema} where true`;
-            
-            // Insert the header text into the query at cursor position
-            // For demo purposes, we'll append it to the WHERE clause
-            const updatedQuery = currentQuery.replace(
-                /where\s+true/i, 
-                `where ${headerText.toLowerCase().replace(/\s+/g, '_')} = "value" AND true`
-            );
-            
-            searchParams.set(queryField, updatedQuery);
-            setSearchParams(searchParams);
-            navigate(`/app/schema/${firstSchema}?${searchParams.toString()}`);
-        }
+        console.log(`Header clicked: ${headerText}. To query this field, please navigate to a specific schema page.`);
     };
 
     return (<TabView tabs={tabs}></TabView>);

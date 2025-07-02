@@ -5,22 +5,18 @@ import VispanaApiClient from "../../client/vispana-api-client";
 import Loading from "../loading/loading";
 import VispanaError from "../error/vispana-error";
 
-function Preview() {
-    const vispanaState = useOutletContext()
+function Preview({ containerUrl, schema }) {
+    const vispanaClient = new VispanaApiClient();
     const [data, setData] = useState({ columns: [], content: [] });
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState({ hasError: false, error: "" });
     const [totalRows, setTotalRows] = useState(0);
-
-    // pagination state - copied from query-result.js
-    const [offset, setOffset] = useState(0);
-    const [perPage, setPerPage] = useState(15); // Will be updated on mount
     const [page, setPage] = useState(1);
+    const [offset, setOffset] = useState(0);
+    const [perPage, setPerPage] = useState(10);
     const [optimalPageSize, setOptimalPageSize] = useState(15); // Store calculated optimal size
-    const [isOptimalSizeCalculated, setIsOptimalSizeCalculated] = useState(false); // Track calculation completion
     const [gridHeight, setGridHeight] = useState('70vh'); // Dynamic grid height
-
-    const vispanaClient = new VispanaApiClient();
+    const [isOptimalSizeCalculated, setIsOptimalSizeCalculated] = useState(false); // Track calculation completion
 
     // Track important pagination changes
     React.useEffect(() => {
@@ -102,36 +98,9 @@ function Preview() {
 
     useEffect(() => {
         const fetchPreviewData = async () => {
-            // Try to find schema in different locations
-            let activeSchema = vispanaState.activeSchema;
-            let containerUrl = vispanaState.containerUrl;
-            
-            // Check if schema is in content clusters
-            if (!activeSchema && vispanaState.content?.clusters?.length > 0) {
-                const firstCluster = vispanaState.content.clusters[0];
-                if (firstCluster.contentData?.length > 0) {
-                    activeSchema = firstCluster.contentData[0].schema?.schemaName;
-                    console.log('Found schema in content.clusters:', activeSchema);
-                }
-            }
-            
-            // Use the same logic as other query components to find queryable container
-            if (!containerUrl && vispanaState.container?.clusters?.length > 0) {
-                const queryableClusters = vispanaState.container.clusters.filter(cluster => cluster.canSearch === true);
-                if (queryableClusters.length > 0 && queryableClusters[0].route) {
-                    containerUrl = queryableClusters[0].route;
-                } else {
-                    console.log('No queryable containers found or no route set');
-                    console.log('Available clusters:', vispanaState.container.clusters.map(c => ({ 
-                        name: c.name, 
-                        canSearch: c.canSearch, 
-                        route: c.route 
-                    })));
-                }
-            }
-
-            if (!activeSchema) {
-                console.log('No active schema found, setting error');
+            // Use the props directly, just like query.js does
+            if (!schema) {
+                console.log('No schema provided');
                 setError({
                     hasError: true,
                     error: "No schema available for preview"
@@ -141,7 +110,7 @@ function Preview() {
             }
 
             if (!containerUrl) {
-                console.log('No container URL found, setting error');
+                console.log('No container URL provided');
                 setError({
                     hasError: true,
                     error: "Container URL not available"
@@ -155,7 +124,7 @@ function Preview() {
 
             try {
                 const defaultQuery = {
-                    yql: `SELECT * from ${activeSchema} WHERE true LIMIT ${perPage};`
+                    yql: `SELECT * from ${schema} WHERE true LIMIT ${perPage};`
                 };
                 
                 console.log('Executing query:', defaultQuery);
@@ -231,16 +200,16 @@ function Preview() {
         if (isOptimalSizeCalculated && perPage > 0) {
             fetchPreviewData();
         }
-    }, [vispanaState, offset, perPage, isOptimalSizeCalculated]); // Combined dependencies
+    }, [schema, containerUrl, offset, perPage, isOptimalSizeCalculated]); // Updated dependencies
 
-    // Reset pagination when vispanaState changes (but prevent infinite loop)
+    // Reset pagination when schema or containerUrl changes
     useEffect(() => {
         if (page !== 1 || offset !== 0) {
             setPage(1);
             setOffset(0);
         }
         setError({ hasError: false, error: "" });
-    }, [vispanaState]);
+    }, [schema, containerUrl]);
 
     // Process query results into grid format
     const processResult = (result) => {
