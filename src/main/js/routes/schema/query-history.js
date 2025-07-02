@@ -26,72 +26,45 @@ const FilterComponent = ({ filterText, onFilter}) => (
 );
 
 function QueryHistory({schema, tabSelector, searchParams, setSearchParams}) {
+
+    // Calculate optimal values ONCE during component creation (synchronous)
+    const calculateOptimalValues = () => {
+        const viewportHeight = window.innerHeight;
+        
+        // overhead calculation for Query History tab
+        const offsetHeight = 100;
+        
+        // const totalOverhead = headerHeight + tabsHeight + searchFilterHeight + paginationHeight + marginsPadding;
+        const availableHeight = viewportHeight - offsetHeight;
+        
+        // Calculate optimal page size
+        const rowHeight = 52;
+        const optimalRows = Math.floor(availableHeight / rowHeight);
+        const optimalPageSize = Math.max(10, Math.min(50, optimalRows)); // Between 10-50 rows
+        
+        // Calculate grid height (use remaining space)
+        const gridHeight = Math.max(300, availableHeight); // Minimum 300px
+        
+        return {
+            pageSize: optimalPageSize,
+            height: `${gridHeight}px`
+        };
+    };
+
+    // Calculate once during initialization - no useEffect, no race conditions
+    const optimalValues = calculateOptimalValues();
+    const [gridHeight] = React.useState(optimalValues.height);
+    const [optimalPageSize] = React.useState(optimalValues.pageSize);
+
     const [filterText, setFilterText] = React.useState('');
     const [resetPaginationToggle, setResetPaginationToggle] = React.useState(false);
-    const [perPage, setPerPage] = React.useState(15); // Will be updated on mount
-    const [optimalPageSize, setOptimalPageSize] = React.useState(15); // Store calculated optimal size
-    const [isOptimalSizeCalculated, setIsOptimalSizeCalculated] = React.useState(false); // Track calculation completion
-    const [gridHeight, setGridHeight] = React.useState('70vh'); // Dynamic grid height
+    const [perPage, setPerPage] = React.useState(optimalValues.pageSize); // Start with optimal size
 
     const historyClient = new HistoryClient()
     const queryHistory = historyClient.fetchHistory()
     const filteredItems = queryHistory.filter(item => {
         return item.query && item.query.toLowerCase().includes(filterText.toLowerCase())
     });
-
-    // Calculate optimal page size based on viewport height (only on load)
-    const calculateOptimalPageSize = () => {
-        const viewportHeight = window.innerHeight;
-        const headerHeight = 100; // Approximate height for navigation/headers
-        const subHeaderHeight = 52; // Height for search filter
-        const paginationHeight = 80; // Height for pagination controls
-        const rowHeight = 48; // Approximate height per row
-        const availableHeight = viewportHeight - headerHeight - subHeaderHeight - paginationHeight;
-        const maxRows = Math.floor(availableHeight / rowHeight);
-        
-        // Use at least 15 rows, but allow more if space permits
-        return Math.max(15, maxRows);
-    };
-
-    // Calculate optimal grid height based on viewport
-    const calculateOptimalGridHeight = () => {
-        const viewportHeight = window.innerHeight;
-        const navigationHeight = 60; // Top navigation bar
-        const tabHeight = 50; // Tab navigation height
-        const marginsPadding = 40; // Various margins and padding
-        const availableHeight = viewportHeight - navigationHeight - tabHeight - marginsPadding;
-        
-        // Use at least 400px, but allow more if space permits
-        const minHeight = 400;
-        const calculatedHeight = Math.max(minHeight, availableHeight);
-        
-        return `${calculatedHeight}px`;
-    };
-
-    // Set optimal page size and grid height on component mount (only once)
-    React.useEffect(() => {
-        const optimalSize = calculateOptimalPageSize();
-        const optimalHeight = calculateOptimalGridHeight();
-        
-        console.log('QueryHistory initialization - optimal size:', optimalSize, 'height:', optimalHeight);
-        
-        setOptimalPageSize(optimalSize);
-        setPerPage(optimalSize);
-        setGridHeight(optimalHeight);
-        setIsOptimalSizeCalculated(true);
-    }, []); // Empty dependency array - only run once on mount
-
-    // Add resize listener to recalculate grid height when window is resized
-    React.useEffect(() => {
-        const handleResize = () => {
-            const newHeight = calculateOptimalGridHeight();
-            console.log('QueryHistory window resized, new grid height:', newHeight);
-            setGridHeight(newHeight);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []); // Empty dependency array - only set up listener once
 
     // Pagination handlers
     const handlePerRowsChange = async (newPerPage, page) => {
@@ -165,11 +138,6 @@ function QueryHistory({schema, tabSelector, searchParams, setSearchParams}) {
         </SyntaxHighlighter>
     };
 
-    // Show loading state until optimal size is calculated
-    if (!isOptimalSizeCalculated) {
-        return <div className="text-yellow-400 p-8"></div>;
-    }
-
     return (
         <div className="query-history-grid">
             <DynamicEnhancedGrid
@@ -216,7 +184,6 @@ function QueryHistory({schema, tabSelector, searchParams, setSearchParams}) {
                 subHeaderWrap={true}
                 subHeaderComponent={subHeaderComponentMemo}
                 gridHeight={gridHeight}
-                actionsColumn={false}
             />
         </div>
     )
