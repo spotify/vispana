@@ -16,42 +16,27 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
 
     // Extract field names from vespaState schema content
     useEffect(() => {
-        console.log("EditorHybrid: vespaState received:", vespaState);
-        
         if (vespaState && vespaState.content && vespaState.content.clusters) {
             const allFields = [];
-            
-            console.log("EditorHybrid: Processing clusters:", vespaState.content.clusters.length);
-            
             vespaState.content.clusters.forEach((cluster, clusterIndex) => {
-                console.log(`EditorHybrid: Cluster ${clusterIndex}:`, cluster.name, "contentData count:", cluster.contentData.length);
-                
                 cluster.contentData.forEach((contentData, dataIndex) => {
                     const schemaContent = contentData.schema.schemaContent;
-                    console.log(`EditorHybrid: Schema ${dataIndex} (${contentData.schema.schemaName}):`, schemaContent.substring(0, 200) + "...");
-                    
                     // Extract field names from schema content (.sd file)
                     const fieldMatches = schemaContent.match(/field\s+(\w+)\s+type/g);
-                    console.log("EditorHybrid: Field matches found:", fieldMatches);
-                    
                     if (fieldMatches) {
                         fieldMatches.forEach(match => {
                             const fieldName = match.match(/field\s+(\w+)\s+type/)[1];
-                            console.log("EditorHybrid: Extracted field name:", fieldName);
                             if (!allFields.includes(fieldName)) {
                                 allFields.push(fieldName);
                             }
                         });
                     } else {
                         // Try alternative patterns
-                        console.log("EditorHybrid: Trying alternative field pattern...");
                         const altMatches = schemaContent.match(/field\s+(\w+)\s*{/g);
-                        console.log("EditorHybrid: Alternative matches:", altMatches);
-                        
+
                         if (altMatches) {
                             altMatches.forEach(match => {
                                 const fieldName = match.match(/field\s+(\w+)\s*{/)[1];
-                                console.log("EditorHybrid: Alternative extracted field name:", fieldName);
                                 if (!allFields.includes(fieldName)) {
                                     allFields.push(fieldName);
                                 }
@@ -61,7 +46,6 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
                 });
             });
             
-            console.log("EditorHybrid: All extracted fields:", allFields);
             setSchemaFields(allFields.sort());
         } else {
             console.log("EditorHybrid: vespaState not available or incomplete");
@@ -180,8 +164,6 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
     const [schemaCompleter, setSchemaCompleter] = useState(null);
     
     useEffect(() => {
-        console.log("EditorHybrid: Creating new schemaCompleter with fields:", schemaFields);
-        
         const newCompleter = {
             getCompletions: function(editor, session, pos, prefix, callback) {
                 const completions = [];
@@ -192,17 +174,12 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
                 
                 // Check if we're inside any string value
                 const stringContext = this.getStringContext(beforeCursor);
-                console.log("EditorHybrid: String context for prefix '" + prefix + "':", stringContext);
-                console.log("EditorHybrid: beforeCursor:", beforeCursor);
-                
                 if (stringContext.inString) {
                     if (stringContext.isYQLString && !stringContext.insideSingleQuotes && !stringContext.insideEscapedQuotes) {
                         // Inside YQL string but not inside quotes - provide field completions
-                        console.log("EditorHybrid: Inside YQL string, outside quotes - providing completions");
                         this.getFieldCompletions(completions, prefix);
                     } else {
                         // Inside any other string value OR inside quotes in YQL - disable completions
-                        console.log("EditorHybrid: Inside string value or inside quotes - disabling completions");
                         callback(null, []);
                         return;
                     }
@@ -342,9 +319,7 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
                     
                     yqlContent += char;
                 }
-                
-                console.log("EditorHybrid: YQL content extracted:", yqlContent);
-                
+
                 // Count unescaped single quotes and escaped double quotes
                 let singleQuoteCount = 0;
                 let escapedQuoteCount = 0;
@@ -367,17 +342,11 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
                         singleQuoteCount++;
                     }
                 }
-                
-                console.log("EditorHybrid: Single quote count:", singleQuoteCount);
-                console.log("EditorHybrid: Escaped quote count:", escapedQuoteCount);
-                
+
                 // If odd number of quotes, we're inside quotes
                 const insideSingleQuotes = singleQuoteCount % 2 === 1;
                 const insideEscapedQuotes = escapedQuoteCount % 2 === 1;
-                
-                console.log("EditorHybrid: Inside single quotes:", insideSingleQuotes);
-                console.log("EditorHybrid: Inside escaped quotes:", insideEscapedQuotes);
-                
+
                 return {
                     insideSingleQuotes: insideSingleQuotes,
                     insideEscapedQuotes: insideEscapedQuotes
@@ -617,15 +586,10 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
             },
 
             getFieldCompletions: function(completions, prefix) {
-                console.log("EditorHybrid: getFieldCompletions called with prefix:", prefix);
-                console.log("EditorHybrid: Available schemaFields:", schemaFields);
-                
                 // Use schema fields extracted from vespaState
                 if (schemaFields.length > 0) {
-                    console.log("EditorHybrid: Adding schema fields to completions");
                     schemaFields.forEach(field => {
                         if (!prefix || field.toLowerCase().includes(prefix.toLowerCase())) {
-                            console.log("EditorHybrid: Adding field completion:", field);
                             completions.push({
                                 caption: field,
                                 snippet: field,
@@ -635,7 +599,6 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
                         }
                     });
                 } else {
-                    console.log("EditorHybrid: No schema fields available, adding fallback fields");
                     // Add some fallback fields for testing
                     const fallbackFields = ['title', 'content', 'id', 'url'];
                     fallbackFields.forEach(field => {
@@ -651,10 +614,7 @@ function EditorHybrid({query, setQuery, handleRunQuery, handleFormatQuery, vespa
                 }
                 
                 // Add YQL keywords
-                console.log("EditorHybrid: Adding YQL keywords");
                 this.addYQLKeywords(completions, prefix);
-                
-                console.log("EditorHybrid: Total completions added:", completions.length);
             },
 
             addYQLKeywords: function(completions, prefix) {
