@@ -352,6 +352,7 @@ function EnhancedGrid({
     hasDistributionKey = false, 
     onHeaderClick = null,
     pagination = false,
+    paginationPerPage = 10, // Default initial page size
     fixedHeader = true,
     expandableRows = true,
     showActions = true,  // New prop to control actions column
@@ -361,6 +362,13 @@ function EnhancedGrid({
 }) {
     const [modalData, setModalData] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Debug logging
+    console.log('EnhancedGrid received props:', {
+        paginationPerPage,
+        paginationRowsPerPageOptions,
+        header
+    });
 
     // Override settings for simplified mode
     const actualExpandableRows = simplified ? false : expandableRows;
@@ -498,6 +506,7 @@ function EnhancedGrid({
                     striped
                     responsive
                     pagination={pagination}
+                    paginationPerPage={paginationPerPage}
                     paginationRowsPerPageOptions={paginationRowsPerPageOptions}
                     noDataComponent={
                         <div className="text-yellow-400 p-8">
