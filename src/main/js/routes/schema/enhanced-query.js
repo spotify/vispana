@@ -6,7 +6,7 @@ import Editor from "../../components/editor/editor-hybrid";
 import VispanaApiClient from "../../client/vispana-api-client";
 import { createReactHeaderClickHandler } from "../../utils/query-editor-integration";
 
-function Query({containerUrl, schema, searchParams, setSearchParams, vespaState}) {
+function EnhancedQuery({containerUrl, schema, searchParams, setSearchParams, vespaState}) {
     const vispanaClient = new VispanaApiClient()
     const [query, setQuery] = useState(defaultQuery)
     const [showResults, setShowResults] = useState(false)
@@ -127,7 +127,7 @@ function Query({containerUrl, schema, searchParams, setSearchParams, vespaState}
                          defaultPageSize={10}
                          containerUrl={containerUrl}
                          schema={schema}
-                         showResults={showResults}
+                         render={showResults}
                          refreshQuery={refreshQuery}
                          vispanaClient={vispanaClient}
                          useTabs={true}
@@ -146,4 +146,4 @@ export function queryFieldFromSearchParam(schema) {
     return `${schema}Query`
 }
 
-export default Query
+export default EnhancedQuery 

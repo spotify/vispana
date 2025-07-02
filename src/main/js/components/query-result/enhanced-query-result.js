@@ -5,9 +5,9 @@ import Loading from "../../routes/loading/loading";
 import VispanaError from "../../routes/error/vispana-error";
 import TabView from "../tabs/tab-view";
 import DynamicEnhancedGrid from "../simple-grid/dynamic-enhanced-grid";
+import { createReactHeaderClickHandler } from "../../utils/query-editor-integration";
 
-function QueryResult({containerUrl, vispanaClient, query, showResults, schema, refreshQuery, defaultPageSize = 15, useTabs = false}) {
-
+function EnhancedQueryResult({containerUrl, vispanaClient, query, showResults, schema, refreshQuery, defaultPageSize = 15, useTabs = false, onHeaderClick = null}) {
     // data state
     const [data, setData] = useState({columns: [], content: [], trace: []});
     const [loading, setLoading] = useState(true);
@@ -27,57 +27,29 @@ function QueryResult({containerUrl, vispanaClient, query, showResults, schema, r
         error: ""
     });
 
-    // Calculate optimal page size based on viewport height (accounting for more UI elements)
+    // Calculate optimal page size based on viewport height (simpler approach)
     const calculateOptimalPageSize = () => {
         const viewportHeight = window.innerHeight;
-        const navigationHeight = 100; // Top navigation bar (more conservative)
-        const tabHeight = 80; // Tab navigation height (more conservative)
-        const queryEditorHeight = useTabs ? 300 : 250; // Query editor area (more conservative)
-        const tabBarHeight = useTabs ? 80 : 0; // Results/JSON/Trace tab bar (more conservative)
-        const tableHeaderHeight = 60; // DataTable header height (increased)
-        const paginationHeight = 100; // Height for pagination controls (more conservative)
-        const marginsPadding = 120; // Various margins and padding (much more conservative)
-        const rowHeight = 56; // Conservative row height
         
-        const totalOverhead = navigationHeight + tabHeight + queryEditorHeight + tabBarHeight + tableHeaderHeight + paginationHeight + marginsPadding;
-        const availableHeight = viewportHeight - totalOverhead;
+        // Simple calculation: use 70% of viewport for grid content
+        const availableHeight = viewportHeight * 0.7;
+        const rowHeight = 52; // Realistic row height
         const maxRows = Math.floor(availableHeight / rowHeight);
         
-        console.log('QueryResult calculations:', {
-            viewportHeight,
-            totalOverhead,
-            availableHeight,
-            maxRows,
-            useTabs
-        });
-        
-        // Use at least 5 rows, but allow more if space permits (very conservative)
-        return Math.max(5, maxRows);
+        // Use at least 10 rows, but allow more if space permits
+        return Math.max(10, maxRows);
     };
 
     // Calculate optimal grid height based on viewport
     const calculateOptimalGridHeight = () => {
         const viewportHeight = window.innerHeight;
-        const navigationHeight = 100; // Top navigation bar (more conservative)
-        const tabHeight = 80; // Tab navigation height (more conservative)
-        const queryEditorHeight = useTabs ? 300 : 250; // Query editor area (more conservative)
-        const tabBarHeight = useTabs ? 80 : 0; // Results/JSON/Trace tab bar (more conservative)
-        const marginsPadding = 120; // Various margins and padding (much more conservative)
         
-        const totalOverhead = navigationHeight + tabHeight + queryEditorHeight + tabBarHeight + marginsPadding;
-        const availableHeight = viewportHeight - totalOverhead;
+        // Use 60% of viewport height for the grid
+        const gridHeight = Math.floor(viewportHeight * 0.6);
         
-        // Use at least 300px, but allow more if space permits
-        const minHeight = 300;
-        const calculatedHeight = Math.max(minHeight, availableHeight);
-        
-        console.log('QueryResult grid height calculation:', {
-            viewportHeight,
-            totalOverhead,
-            availableHeight,
-            calculatedHeight,
-            useTabs
-        });
+        // Ensure minimum reasonable height
+        const minHeight = 400;
+        const calculatedHeight = Math.max(minHeight, gridHeight);
         
         return `${calculatedHeight}px`;
     };
@@ -87,15 +59,10 @@ function QueryResult({containerUrl, vispanaClient, query, showResults, schema, r
         const optimalSize = calculateOptimalPageSize();
         const optimalHeight = calculateOptimalGridHeight();
         
-        console.log('QueryResult initialized with:', {
-            optimalSize,
-            optimalHeight,
-            useTabs,
-            defaultPageSize
-        });
+        // Initialize adaptive query result sizing
         
         setOptimalPageSize(optimalSize);
-        // Don't override defaultPageSize on first load, but make it available in dropdown
+        setPerPage(optimalSize); // Set perPage to optimal size
         setGridHeight(optimalHeight);
         setIsOptimalSizeCalculated(true);
     }, [useTabs]); // Include useTabs since it affects calculations
@@ -104,7 +71,7 @@ function QueryResult({containerUrl, vispanaClient, query, showResults, schema, r
     useEffect(() => {
         const handleResize = () => {
             const newHeight = calculateOptimalGridHeight();
-            // Update query result grid height on window resize
+            // Update grid height on resize
             setGridHeight(newHeight);
         };
 
@@ -196,11 +163,14 @@ function QueryResult({containerUrl, vispanaClient, query, showResults, schema, r
         setOffset(offset)
     };
 
-    const handlePerRowsChange = async (newPerPage, page) => {
+    const handlePerRowsChange = (newPerPage, newPage) => {
         if (newPerPage === perPage) {
             return;
         }
         setPerPage(newPerPage);
+        // Reset to first page when changing page size
+        setPage(1);
+        setOffset(0);
     };
 
     useEffect(() => {
@@ -242,22 +212,29 @@ function QueryResult({containerUrl, vispanaClient, query, showResults, schema, r
         <DynamicEnhancedGrid
             columns={data.columns}
             data={data.content}
+            onHeaderClick={onHeaderClick}
             pagination={true}
             paginationServer={true}
             paginationTotalRows={totalRows}
             paginationPerPage={perPage}
-            paginationRowsPerPageOptions={[10, 15, optimalPageSize, 25, 50, 100]
+            paginationRowsPerPageOptions={[5, 10, 15, optimalPageSize, 25, 50, 100]
                 .filter((value, index, array) => array.indexOf(value) === index)
                 .sort((a, b) => a - b)}
             onChangeRowsPerPage={handlePerRowsChange}
             onChangePage={handlePageChange}
             fixedHeader={true}
             expandableRows={true}
-            expandableRowsComponent={ExpandedComponent}
             progressPending={loading}
             progressComponent={<Loading centralize={false}/>}
             noDataComponent={<NoDataConst/>}
             gridHeight={gridHeight}
+            customStyles={{
+                head: {
+                    style: {
+                        color: '#facc15'
+                    }
+                }
+            }}
         />
     )
 
@@ -325,15 +302,17 @@ function processResult(result) {
     resultFields.push("relevance")
 
     const columns = [...new Set(resultFields)]
-        .map(column => ({
-            name: column,
-            maxWidth: "300px",
-            // Let DynamicEnhancedGrid calculate width based on header text length
-            selector: row => {
-                const rawData = row[column];
-                return extractData(rawData);
-            },
-        }))
+        .map(column => (
+            {
+                name: column,
+                maxWidth: "300px",
+                minWidth: "50px",
+                selector: row => {
+                    const rawData = row[column]
+                    return extractData(rawData)
+                },
+                sortable: true,
+            }))
 
     const data = children.map(child => {
         const fields = child.fields;
@@ -355,10 +334,4 @@ function processResult(result) {
     }
 }
 
-const ExpandedComponent = ({data}) => {
-    return <SyntaxHighlighter language="json" style={androidstudio}>
-        {JSON.stringify(data, null, 2)}
-    </SyntaxHighlighter>
-};
-
-export default QueryResult;
+export default EnhancedQueryResult; 
