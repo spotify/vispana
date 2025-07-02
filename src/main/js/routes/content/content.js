@@ -10,83 +10,52 @@ function Content() {
     const vespaState = useOutletContext();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [optimalPageSize, setOptimalPageSize] = React.useState(15);
-    const [isOptimalSizeCalculated, setIsOptimalSizeCalculated] = React.useState(false);
-    const [gridHeight, setGridHeight] = React.useState('60vh');
 
-    // Calculate optimal page size based on viewport height (accounting for more UI elements)
-    const calculateOptimalPageSize = () => {
+    // Calculate optimal values ONCE during component creation (synchronous)
+    const calculateOptimalValues = () => {
         const viewportHeight = window.innerHeight;
-        const navigationHeight = 60; // Top navigation bar
-        const tabHeight = 50; // Tab navigation height
-        const tabBarHeight = 50; // Content cluster tab bar
-        const overviewHeight = 120; // Overview card height
-        const schemasHeight = 180; // Schema cards section height (estimated)
-        const paginationHeight = 80; // Height for pagination controls
-        const marginsPadding = 80; // Various margins and padding (more due to cards)
-        const rowHeight = 48; // Approximate height per row
         
-        const totalOverhead = navigationHeight + tabHeight + tabBarHeight + overviewHeight + schemasHeight + paginationHeight + marginsPadding;
-        const availableHeight = viewportHeight - totalOverhead;
-        const maxRows = Math.floor(availableHeight / rowHeight);
+        // overhead calculation for Content tab
+        const offsetHeight = 450; // Higher offset due to overview cards and schema cards
         
-        // Use at least 10 rows (lower due to more UI overhead)
-        return Math.max(10, maxRows);
-    };
+        // const totalOverhead = navigationHeight + tabHeight + tabBarHeight + overviewHeight + schemasHeight + paginationHeight + marginsPadding;
+        const availableHeight = viewportHeight - offsetHeight;
+        
+        // Calculate optimal page size
+        const rowHeight = 52;
+        const optimalRows = Math.floor(availableHeight / rowHeight);
+        const optimalPageSize = Math.max(5, Math.min(50, optimalRows)); // Between 10-50 rows
 
-    // Calculate optimal grid height based on viewport
-    const calculateOptimalGridHeight = () => {
-        const viewportHeight = window.innerHeight;
-        const navigationHeight = 60; // Top navigation bar
-        const tabHeight = 50; // Tab navigation height
-        const contentAreaHeight = 200; // Overview + schema cards area (reduced estimate)
-        const marginsPadding = 80; // Various margins and padding (more conservative)
-        
-        const totalOverhead = navigationHeight + tabHeight + contentAreaHeight + marginsPadding;
-        const availableHeight = viewportHeight - totalOverhead;
-        
-        // Use at least 250px, but allow more if space permits
-        const minHeight = 250;
-        const calculatedHeight = Math.max(minHeight, availableHeight);
-        
-        console.log('Content grid height calculation:', {
+        // Debug the calculation
+        console.log('Content calculation debug:', {
             viewportHeight,
-            totalOverhead,
+            offsetHeight,
             availableHeight,
-            calculatedHeight
+            rowHeight,
+            optimalRows,
+            optimalPageSize
         });
         
-        return `${calculatedHeight}px`;
+        // Calculate grid height (use remaining space)
+        const gridHeight = Math.max(300, availableHeight); // Minimum 300px
+        
+        return {
+            pageSize: optimalPageSize,
+            height: `${gridHeight}px`
+        };
     };
 
-    // Set optimal page size and grid height on component mount (only once)
-    React.useEffect(() => {
-        const optimalSize = calculateOptimalPageSize();
-        const optimalHeight = calculateOptimalGridHeight();
-        
-        console.log('Content initialization - optimal size:', optimalSize, 'height:', optimalHeight);
-        
-        setOptimalPageSize(optimalSize);
-        setGridHeight(optimalHeight);
-        setIsOptimalSizeCalculated(true);
-    }, []); // Empty dependency array - only run once on mount
+    // Calculate once during initialization - no useEffect, no race conditions
+    const optimalValues = calculateOptimalValues();
+    const [gridHeight] = React.useState(optimalValues.height);
+    const [optimalPageSize] = React.useState(optimalValues.pageSize);
 
-    // Add resize listener to recalculate grid height when window is resized
-    React.useEffect(() => {
-        const handleResize = () => {
-            const newHeight = calculateOptimalGridHeight();
-            console.log('Content window resized, new grid height:', newHeight);
-            setGridHeight(newHeight);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []); // Empty dependency array - only set up listener once
-
-    // Show loading state until optimal size is calculated
-    if (!isOptimalSizeCalculated) {
-        return <div className="text-yellow-400 p-8"></div>;
-    }
+    // Debug logging
+    console.log('Content.js - Optimal values calculated:', {
+        windowHeight: window.innerHeight,
+        optimalPageSize: optimalValues.pageSize,
+        gridHeight: optimalValues.height
+    });
 
     const tabs = vespaState
         .content
@@ -234,6 +203,7 @@ function Content() {
                     data={contentNodes}
                     hasDistributionKey={true}
                     pagination={contentNodes.length > 10} // Enable pagination for large datasets
+                    paginationPerPage={optimalPageSize} // Set initial page size to optimal value
                     paginationRowsPerPageOptions={[5, 10, optimalPageSize, 20, 50]
                         .filter((value, index, array) => array.indexOf(value) === index)
                         .sort((a, b) => a - b)}

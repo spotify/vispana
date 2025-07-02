@@ -7,76 +7,45 @@ import VispanaError from "../error/vispana-error";
 
 function Preview({ containerUrl, schema }) {
     const vispanaClient = new VispanaApiClient();
+
+    // Calculate optimal values ONCE during component creation (synchronous)
+    const calculateOptimalValues = () => {
+        const viewportHeight = window.innerHeight;
+
+        // overhead calculation for Preview tab
+        const offsetHeight = 100;
+        
+        // const totalOverhead = headerHeight + tabsHeight + paginationHeight + marginsPadding;
+        const availableHeight = viewportHeight - offsetHeight;
+        
+        // Calculate optimal page size
+        const rowHeight = 52;
+        const optimalRows = Math.floor(availableHeight / rowHeight);
+        const optimalPageSize = Math.max(10, Math.min(50, optimalRows)); // Between 10-50 rows
+        
+        // Calculate grid height (use remaining space)
+        const gridHeight = Math.max(300, availableHeight); // Minimum 300px
+        
+        return {
+            pageSize: optimalPageSize,
+            height: `${gridHeight}px`
+        };
+    };
+
+    // Calculate once during initialization - no useEffect, no race conditions
+    const optimalValues = calculateOptimalValues();
+    const [gridHeight] = useState(optimalValues.height);
+    const [optimalPageSize] = useState(optimalValues.pageSize);
+
     const [data, setData] = useState({ columns: [], content: [] });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState({ hasError: false, error: "" });
     const [totalRows, setTotalRows] = useState(0);
     const [page, setPage] = useState(1);
     const [offset, setOffset] = useState(0);
-    const [perPage, setPerPage] = useState(10);
-    const [optimalPageSize, setOptimalPageSize] = useState(15); // Store calculated optimal size
-    const [gridHeight, setGridHeight] = useState('70vh'); // Dynamic grid height
-    const [isOptimalSizeCalculated, setIsOptimalSizeCalculated] = useState(false); // Track calculation completion
+    const [perPage, setPerPage] = useState(optimalValues.pageSize); // Start with optimal size
 
-    // Track important pagination changes
-    React.useEffect(() => {
-        // Pagination state tracking for debugging if needed
-    }, [perPage, optimalPageSize]);
-
-    // Calculate optimal page size based on viewport height (only on load)
-    const calculateOptimalPageSize = () => {
-        const viewportHeight = window.innerHeight;
-        const headerHeight = 100; // Approximate height for navigation/headers
-        const paginationHeight = 80; // Height for pagination controls
-        const rowHeight = 48; // Approximate height per row
-        const availableHeight = viewportHeight - headerHeight - paginationHeight;
-        const maxRows = Math.floor(availableHeight / rowHeight);
-        
-        // Use at least 15 rows, but allow more if space permits
-        return Math.max(15, maxRows);
-    };
-
-    // Calculate optimal grid height based on viewport
-    const calculateOptimalGridHeight = () => {
-        const viewportHeight = window.innerHeight;
-        const navigationHeight = 60; // Top navigation bar
-        const tabHeight = 50; // Tab navigation height
-        const marginsPadding = 40; // Various margins and padding
-        const availableHeight = viewportHeight - navigationHeight - tabHeight - marginsPadding;
-        
-        // Use at least 400px, but allow more if space permits
-        const minHeight = 400;
-        const calculatedHeight = Math.max(minHeight, availableHeight);
-        
-        return `${calculatedHeight}px`;
-    };
-
-    // Set optimal page size and grid height on component mount (only once)
-    React.useEffect(() => {
-        const optimalSize = calculateOptimalPageSize();
-        const optimalHeight = calculateOptimalGridHeight();
-        
-        // Initialize optimal pagination settings
-        
-        setOptimalPageSize(optimalSize);
-        setPerPage(optimalSize);
-        setGridHeight(optimalHeight);
-        setIsOptimalSizeCalculated(true);
-    }, []); // Empty dependency array - only run once on mount
-
-    // Add resize listener to recalculate grid height when window is resized
-    React.useEffect(() => {
-        const handleResize = () => {
-            const newHeight = calculateOptimalGridHeight();
-            // Update grid height on window resize
-            setGridHeight(newHeight);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []); // Empty dependency array - only set up listener once
-
-    // pagination handlers - fixed version
+    // pagination handlers - simplified
     const handlePageChange = (newPage) => {
         if (newPage === page) {
             return;
@@ -128,7 +97,7 @@ function Preview({ containerUrl, schema }) {
                 };
                 
                 console.log('Executing query:', defaultQuery);
-                console.log('Pagination params - offset:', offset, 'perPage:', perPage, 'optimalPageSize:', optimalPageSize);
+                console.log('Pagination params - offset:', offset, 'perPage:', perPage);
 
                 // Add timeout to prevent hanging
                 const queryPromise = vispanaClient.postQuery(containerUrl, defaultQuery, offset, perPage);
@@ -196,11 +165,11 @@ function Preview({ containerUrl, schema }) {
             setLoading(false);
         };
 
-        // Only fetch if we have all required data
-        if (isOptimalSizeCalculated && perPage > 0) {
+        // Simplified: only fetch if we have required data and valid page size
+        if (perPage > 0) {
             fetchPreviewData();
         }
-    }, [schema, containerUrl, offset, perPage, isOptimalSizeCalculated]); // Updated dependencies
+    }, [schema, containerUrl, offset, perPage]); // Simplified dependencies
 
     // Reset pagination when schema or containerUrl changes
     useEffect(() => {
@@ -266,7 +235,7 @@ function Preview({ containerUrl, schema }) {
         );
     }
 
-    if (loading || !isOptimalSizeCalculated) {
+    if (loading) {
         return <Loading centralize={false} />;
     }
 

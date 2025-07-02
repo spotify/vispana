@@ -8,109 +8,54 @@ import DynamicEnhancedGrid from "../simple-grid/dynamic-enhanced-grid";
 
 function QueryResult({containerUrl, vispanaClient, query, showResults, schema, refreshQuery, defaultPageSize = 15, useTabs = false}) {
 
+    // Calculate optimal values ONCE during component creation (synchronous)
+    const calculateOptimalValues = () => {
+        const viewportHeight = window.innerHeight;
+        
+        // Conservative overhead calculation
+        const headerHeight = 80;  // Navigation
+        const editorHeight = useTabs ? 200 : 180; // Query editor
+        const tabsHeight = useTabs ? 60 : 0; // Results/JSON tabs
+        const paginationHeight = 80; // Pagination controls
+        const marginsPadding = 60; // Various margins
+        
+        const totalOverhead = headerHeight + editorHeight + tabsHeight + paginationHeight + marginsPadding;
+        const availableHeight = viewportHeight - totalOverhead;
+        
+        // Calculate optimal page size
+        const rowHeight = 52;
+        const optimalRows = Math.floor(availableHeight / rowHeight);
+        const optimalPageSize = Math.max(10, Math.min(50, optimalRows)); // Between 10-50 rows
+        
+        // Calculate grid height (use remaining space)
+        const gridHeight = Math.max(300, availableHeight); // Minimum 300px
+        
+        return {
+            pageSize: optimalPageSize,
+            height: `${gridHeight}px`
+        };
+    };
+
+    // Calculate once during initialization - no useEffect, no race conditions
+    const optimalValues = calculateOptimalValues();
+    const [gridHeight] = useState(optimalValues.height);
+    const [optimalPageSize] = useState(optimalValues.pageSize);
+
     // data state
     const [data, setData] = useState({columns: [], content: [], trace: []});
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
 
-    // pagination state
+    // pagination state - start with optimal size
     const [offset, setOffset] = useState(0);
-    const [perPage, setPerPage] = useState(defaultPageSize);
+    const [perPage, setPerPage] = useState(optimalValues.pageSize);
     const [page, setPage] = useState(1);
-    const [optimalPageSize, setOptimalPageSize] = useState(defaultPageSize);
-    const [isOptimalSizeCalculated, setIsOptimalSizeCalculated] = useState(false);
-    const [gridHeight, setGridHeight] = useState('60vh');
 
     // error state
     const [error, setError] = useState({
         hasError: false,
         error: ""
     });
-
-    // Calculate optimal page size based on viewport height (accounting for more UI elements)
-    const calculateOptimalPageSize = () => {
-        const viewportHeight = window.innerHeight;
-        const navigationHeight = 100; // Top navigation bar (more conservative)
-        const tabHeight = 80; // Tab navigation height (more conservative)
-        const queryEditorHeight = useTabs ? 300 : 250; // Query editor area (more conservative)
-        const tabBarHeight = useTabs ? 80 : 0; // Results/JSON/Trace tab bar (more conservative)
-        const tableHeaderHeight = 60; // DataTable header height (increased)
-        const paginationHeight = 100; // Height for pagination controls (more conservative)
-        const marginsPadding = 120; // Various margins and padding (much more conservative)
-        const rowHeight = 56; // Conservative row height
-        
-        const totalOverhead = navigationHeight + tabHeight + queryEditorHeight + tabBarHeight + tableHeaderHeight + paginationHeight + marginsPadding;
-        const availableHeight = viewportHeight - totalOverhead;
-        const maxRows = Math.floor(availableHeight / rowHeight);
-        
-        console.log('QueryResult calculations:', {
-            viewportHeight,
-            totalOverhead,
-            availableHeight,
-            maxRows,
-            useTabs
-        });
-        
-        // Use at least 5 rows, but allow more if space permits (very conservative)
-        return Math.max(5, maxRows);
-    };
-
-    // Calculate optimal grid height based on viewport
-    const calculateOptimalGridHeight = () => {
-        const viewportHeight = window.innerHeight;
-        const navigationHeight = 100; // Top navigation bar (more conservative)
-        const tabHeight = 80; // Tab navigation height (more conservative)
-        const queryEditorHeight = useTabs ? 300 : 250; // Query editor area (more conservative)
-        const tabBarHeight = useTabs ? 80 : 0; // Results/JSON/Trace tab bar (more conservative)
-        const marginsPadding = 120; // Various margins and padding (much more conservative)
-        
-        const totalOverhead = navigationHeight + tabHeight + queryEditorHeight + tabBarHeight + marginsPadding;
-        const availableHeight = viewportHeight - totalOverhead;
-        
-        // Use at least 300px, but allow more if space permits
-        const minHeight = 300;
-        const calculatedHeight = Math.max(minHeight, availableHeight);
-        
-        console.log('QueryResult grid height calculation:', {
-            viewportHeight,
-            totalOverhead,
-            availableHeight,
-            calculatedHeight,
-            useTabs
-        });
-        
-        return `${calculatedHeight}px`;
-    };
-
-    // Set optimal page size and grid height on component mount (only once)
-    useEffect(() => {
-        const optimalSize = calculateOptimalPageSize();
-        const optimalHeight = calculateOptimalGridHeight();
-        
-        console.log('QueryResult initialized with:', {
-            optimalSize,
-            optimalHeight,
-            useTabs,
-            defaultPageSize
-        });
-        
-        setOptimalPageSize(optimalSize);
-        // Don't override defaultPageSize on first load, but make it available in dropdown
-        setGridHeight(optimalHeight);
-        setIsOptimalSizeCalculated(true);
-    }, [useTabs]); // Include useTabs since it affects calculations
-
-    // Add resize listener to recalculate grid height when window is resized
-    useEffect(() => {
-        const handleResize = () => {
-            const newHeight = calculateOptimalGridHeight();
-            // Update query result grid height on window resize
-            setGridHeight(newHeight);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [useTabs]); // Include useTabs since it affects calculations
 
     const NoDataConst = props => {
         if (data.json && data.json.root) {
@@ -205,7 +150,7 @@ function QueryResult({containerUrl, vispanaClient, query, showResults, schema, r
 
     useEffect(() => {
         setPage(1)
-        setPerPage(defaultPageSize)
+        // Don't override perPage - let user keep their current selection
         setError({
             hasError: false,
               error: ""
@@ -231,11 +176,6 @@ function QueryResult({containerUrl, vispanaClient, query, showResults, schema, r
                 description: error.error
             }}/>
         )
-    }
-
-    // Show loading state until optimal size is calculated
-    if (!isOptimalSizeCalculated) {
-        return <div className="text-yellow-400 p-8"></div>;
     }
 
     const results = (
